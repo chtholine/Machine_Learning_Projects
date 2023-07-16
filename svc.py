@@ -1,7 +1,6 @@
-import itertools
 from matplotlib import pyplot as plt
 from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 
@@ -15,31 +14,24 @@ X_train, X_val, y_train, y_val = train_test_split(X_train_val, y_train_val, test
 C_values = [0.1, 1, 10]
 kernel_values = ['linear', 'poly', 'rbf']
 
-best_accuracy = 0
-best_parameters = {}
+param_grid = {'C': C_values, 'kernel': kernel_values}
 
-hyperparams = []
-accuracies = []
+model = SVC(random_state=42)
+grid_search = GridSearchCV(model, param_grid, cv=3)
+grid_search.fit(X_train_val, y_train_val)
 
-for C, kernel in itertools.product(C_values, kernel_values):
-    model = SVC(C=C, kernel=kernel, random_state=42)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_val)
-    accuracy = accuracy_score(y_val, y_pred)
+best_parameters = grid_search.best_params_
+best_accuracy = grid_search.best_score_
 
-    hyperparams.append(f"C: {C}, kernel: {kernel}")
-    accuracies.append(accuracy)
-
-    if accuracy > best_accuracy:
-        best_accuracy = accuracy
-        best_parameters = {'C': C, 'kernel': kernel}
-    print(f"C: {C}, kernel: {kernel} |", accuracy)
-print("\nНайкращі гіперпараметри |", best_parameters, "\nТочність |", best_accuracy)
-
-sorted_results = sorted(zip(hyperparams, accuracies), key=lambda x: x[1], reverse=True)
-sorted_hyperparams, sorted_accuracies = zip(*sorted_results)
+print("Найкращі гіперпараметри |", best_parameters)
+print("Точність |", best_accuracy)
 
 # Visualization
+results = grid_search.cv_results_
+sorted_indices = results['rank_test_score'].argsort()
+sorted_hyperparams = [f"C: {results['param_C'][i]}, kernel: {results['param_kernel'][i]}" for i in sorted_indices]
+sorted_accuracies = results['mean_test_score'][sorted_indices]
+
 plt.figure(figsize=(10, 6))
 plt.bar(sorted_hyperparams, sorted_accuracies)
 plt.xticks(rotation=45)
