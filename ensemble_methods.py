@@ -5,12 +5,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import (
     RandomForestClassifier,
     GradientBoostingClassifier,
-    BaggingClassifier,
+    BaggingClassifier, StackingClassifier,
 )
 from sklearn.metrics import accuracy_score
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.tree import DecisionTreeClassifier
 
 data = pd.read_csv("auction_data.csv")
 
@@ -124,7 +125,6 @@ print("\nRandom Forest accuracy on the validation set:", rf_val_accuracy)
 print("Gradient Boosting accuracy on the validation set:", gb_val_accuracy)
 print("Bagging accuracy on the validation set:", bg_val_accuracy)
 
-
 rf_test_pred = rf_best_model.predict(X_test)
 gb_test_pred = gb_best_model.predict(X_test)
 bg_test_pred = bg_best_model.predict(X_test)
@@ -145,6 +145,23 @@ plt.xlabel("Predicted Label")
 plt.ylabel("True Label")
 plt.show()
 
+estimators = [
+    ('rf', rf_best_model),
+    ('gb', gb_best_model),
+    ('bg', bg_best_model)
+]
+
+stacking_classifier = StackingClassifier(estimators=estimators, final_estimator=DecisionTreeClassifier())
+stacking_classifier.fit(X_train, y_train)
+
+stacking_val_pred = stacking_classifier.predict(X_val)
+stacking_val_accuracy = accuracy_score(y_val, stacking_val_pred)
+print("\nStacking accuracy on the validation set:", stacking_val_accuracy)
+
+stacking_test_pred = stacking_classifier.predict(X_test)
+stacking_test_accuracy = accuracy_score(y_test, stacking_test_pred)
+print("Stacking accuracy on the test set:", stacking_test_accuracy)
+
 plt.figure(figsize=(6, 4))
 sns.heatmap(confusion_matrix(y_test, gb_test_pred), annot=True, fmt="d", cmap="Greens")
 plt.title("Confusion Matrix - Gradient Boosting")
@@ -155,6 +172,13 @@ plt.show()
 plt.figure(figsize=(6, 4))
 sns.heatmap(confusion_matrix(y_test, bg_test_pred), annot=True, fmt="d", cmap="Oranges")
 plt.title("Confusion Matrix - Bagging")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.show()
+
+plt.figure(figsize=(6, 4))
+sns.heatmap(confusion_matrix(y_test, stacking_test_pred), annot=True, fmt="d", cmap="Purples")
+plt.title("Confusion Matrix - Stacking (Test)")
 plt.xlabel("Predicted Label")
 plt.ylabel("True Label")
 plt.show()
