@@ -1,118 +1,160 @@
 import pandas as pd
-from sklearn.impute import SimpleImputer
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
+from matplotlib import pyplot as plt
 from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report, accuracy_score
-import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    GradientBoostingClassifier,
+    BaggingClassifier,
+)
+from sklearn.metrics import accuracy_score
 import seaborn as sns
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import RandomizedSearchCV
 
-url = "https://archive.ics.uci.edu/ml/machine-learning-databases/credit-screening/crx.data"
-column_names = [
-    "A1",
-    "A2",
-    "A3",
-    "A4",
-    "A5",
-    "A6",
-    "A7",
-    "A8",
-    "A9",
-    "A10",
-    "A11",
-    "A12",
-    "A13",
-    "A14",
-    "A15",
-    "A16",
-]
-data = pd.read_csv(url, header=None, names=column_names, na_values="?")
-data = pd.get_dummies(
-    data, columns=["A1", "A4", "A5", "A6", "A7", "A9", "A10", "A12", "A13"]
+data = pd.read_csv("auction_data.csv")
+
+data["total_capacity"] = (
+        data["process.b1.capacity"]
+        + data["process.b2.capacity"]
+        + data["process.b3.capacity"]
+        + data["process.b4.capacity"]
+)
+data.drop(
+    columns=[
+        "process.b1.capacity",
+        "process.b2.capacity",
+        "process.b3.capacity",
+        "process.b4.capacity",
+    ],
+    inplace=True,
 )
 
-print(data.head())
-print(data.info())
-print(data.isnull().sum())
-
-# unique values in categorical features
-print(data.select_dtypes(include="object").nunique())
-
-# feature engineering
-data["TotalIncome"] = data["A11"] + data["A15"]
 scaler = StandardScaler()
-data[["A2", "A3", "A8", "A11", "A14", "A15", "TotalIncome"]] = scaler.fit_transform(
-    data[["A2", "A3", "A8", "A11", "A14", "A15", "TotalIncome"]]
-)
-X = data.drop("A16", axis=1)
-y = data["A16"]
+X = data.drop(columns=["verification.result", "verification.time"])
+y = data["verification.result"]
+X_scaled = scaler.fit_transform(X)
 
-X_train, X_temp, y_train, y_temp = train_test_split(
-    X, y, test_size=0.3, random_state=42
+X_train, X_test, y_train, y_test = train_test_split(
+    X_scaled, y, test_size=0.3, random_state=42
 )
-X_val, X_test, y_val, y_test = train_test_split(
-    X_temp, y_temp, test_size=0.5, random_state=42
+X_train, X_val, y_train, y_val = train_test_split(
+    X_train, y_train, test_size=0.3, random_state=42
 )
 
-# pipeline for filling in missing values and scaling features
-pipeline = make_pipeline(SimpleImputer(strategy="mean"), StandardScaler())
+# Random Forest base model training
+rf_model = RandomForestClassifier(random_state=42)
+rf_model.fit(X_train, y_train)
+rf_pred = rf_model.predict(X_val)
+rf_accuracy = accuracy_score(y_val, rf_pred)
+print("Random Forest accuracy:", rf_accuracy)
 
-# applying pipeline
-X_train = pipeline.fit_transform(X_train)
-X_val = pipeline.transform(X_val)
-X_test = pipeline.transform(X_test)
+# Gradient Boosting base model training
+gb_model = GradientBoostingClassifier(random_state=42)
+gb_model.fit(X_train, y_train)
+gb_pred = gb_model.predict(X_val)
+gb_accuracy = accuracy_score(y_val, gb_pred)
+print("Gradient Boosting accuracy:", gb_accuracy)
 
-dt_classifier = DecisionTreeClassifier(random_state=42)
-dt_classifier.fit(X_train, y_train)
+# Bagging base model training
+bg_model = BaggingClassifier(random_state=42)
+bg_model.fit(X_train, y_train)
+bg_pred = bg_model.predict(X_val)
+bg_accuracy = accuracy_score(y_val, bg_pred)
+print("Bagging accuracy:", bg_accuracy)
 
-y_val_pred = dt_classifier.predict(X_val)
-accuracy_val = accuracy_score(y_val, y_val_pred)
-print(f"Accuracy on the validation set: {accuracy_val:.4f}")
-
-param_grid = {
-    "criterion": ["gini", "entropy"],
-    "splitter": ["best", "random"],
-    "max_depth": [None, 5, 10, 15],
+rf_params = {
+    "n_estimators": [50, 100, 200],
+    "max_depth": [None, 10, 20],
     "min_samples_split": [2, 5, 10],
     "min_samples_leaf": [1, 2, 4],
 }
 
-grid_search = GridSearchCV(
-    estimator=dt_classifier, param_grid=param_grid, cv=5, n_jobs=-1
+gb_params = {
+    "n_estimators": [50, 100, 200],
+    "learning_rate": [0.1, 0.05, 0.01],
+    "max_depth": [3, 5, 7],
+    "min_samples_split": [2, 5, 10],
+    "min_samples_leaf": [1, 2, 4],
+}
+
+bg_params = {
+    "n_estimators": [50, 100, 200],
+    "max_samples": [0.5, 1.0],
+    "max_features": [0.5, 1.0],
+}
+
+rf_random = RandomizedSearchCV(
+    RandomForestClassifier(random_state=42), rf_params, n_iter=10, cv=5, random_state=42
 )
-grid_search.fit(X_train, y_train)
-print(f"The best hyperparameters:\n{grid_search.best_params_}")
-print(f"Accuracy on the validation set:\n{grid_search.best_score_}")
-y_test_pred = grid_search.best_estimator_.predict(X_test)
-accuracy_test = accuracy_score(y_test, y_test_pred)
-print(f"Accuracy on the test set: {accuracy_test:.4f}")
-print(f"Classification report:\n{classification_report(y_test, y_test_pred)}")
+rf_random.fit(X_train, y_train)
 
-y_test_pred = dt_classifier.predict(X_test)
-
-confusion_matrix = pd.crosstab(
-    y_test, y_test_pred, rownames=["Actual"], colnames=["Predicted"]
+gb_random = RandomizedSearchCV(
+    GradientBoostingClassifier(random_state=42),
+    gb_params,
+    n_iter=10,
+    cv=5,
+    random_state=42,
 )
+gb_random.fit(X_train, y_train)
 
-plt.figure(figsize=(8, 6))
-sns.heatmap(confusion_matrix, annot=True, cmap="Blues", fmt="d")
-plt.title("Confusion Matrix")
+bg_random = RandomizedSearchCV(
+    BaggingClassifier(random_state=42), bg_params, n_iter=10, cv=5, random_state=42
+)
+bg_random.fit(X_train, y_train)
+
+print("\nBest parameters for Random Forest:", rf_random.best_params_)
+print("Best parameters for Gradient Boosting:", gb_random.best_params_)
+print("Best parameters for Bagging:", bg_random.best_params_)
+
+
+rf_best_model = rf_random.best_estimator_
+rf_val_pred = rf_best_model.predict(X_val)
+rf_val_accuracy = accuracy_score(y_val, rf_val_pred)
+
+gb_best_model = gb_random.best_estimator_
+gb_val_pred = gb_best_model.predict(X_val)
+gb_val_accuracy = accuracy_score(y_val, gb_val_pred)
+
+bg_best_model = bg_random.best_estimator_
+bg_val_pred = bg_best_model.predict(X_val)
+bg_val_accuracy = accuracy_score(y_val, bg_val_pred)
+
+print("\nRandom Forest accuracy on the validation set:", rf_val_accuracy)
+print("Gradient Boosting accuracy on the validation set:", gb_val_accuracy)
+print("Bagging accuracy on the validation set:", bg_val_accuracy)
+
+
+rf_test_pred = rf_best_model.predict(X_test)
+gb_test_pred = gb_best_model.predict(X_test)
+bg_test_pred = bg_best_model.predict(X_test)
+
+rf_test_accuracy = accuracy_score(y_test, rf_test_pred)
+gb_test_accuracy = accuracy_score(y_test, gb_test_pred)
+bg_test_accuracy = accuracy_score(y_test, bg_test_pred)
+
+print("\nRandom Forest accuracy on the test set:", rf_test_accuracy)
+print("Gradient Boosting accuracy on the test set:", gb_test_accuracy)
+print("Bagging accuracy on the test set:", bg_test_accuracy)
+
+
+plt.figure(figsize=(6, 4))
+sns.heatmap(confusion_matrix(y_test, rf_test_pred), annot=True, fmt="d", cmap="Blues")
+plt.title("Confusion Matrix - Random Forest")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
 plt.show()
 
-feature_importance = dt_classifier.feature_importances_
-features = X.columns
-sorted_idx = feature_importance.argsort()
+plt.figure(figsize=(6, 4))
+sns.heatmap(confusion_matrix(y_test, gb_test_pred), annot=True, fmt="d", cmap="Greens")
+plt.title("Confusion Matrix - Gradient Boosting")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.show()
 
-num_features = 10
-
-plt.figure(figsize=(10, 6))
-plt.barh(
-    range(num_features), feature_importance[sorted_idx][-num_features:], align="center"
-)
-plt.yticks(range(num_features), [features[i] for i in sorted_idx][-num_features:])
-plt.xlabel("Importance")
-plt.ylabel("Features")
-plt.title("Top 10 Important Features")
+plt.figure(figsize=(6, 4))
+sns.heatmap(confusion_matrix(y_test, bg_test_pred), annot=True, fmt="d", cmap="Oranges")
+plt.title("Confusion Matrix - Bagging")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
 plt.show()
