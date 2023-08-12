@@ -1,7 +1,7 @@
 import numpy as np
 
 # Task 1
-dataset = np.genfromtxt('dataset.csv', delimiter=',')
+dataset = np.genfromtxt('datasets/iris.csv', delimiter=',')
 target = dataset[:, -1]
 dataset = np.delete(dataset, -1, axis=1)
 print(f"Task #1:\n{dataset}\n")
