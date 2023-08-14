@@ -1,7 +1,7 @@
 import numpy as np
 
 # Task 1
-dataset = np.genfromtxt('datasets/iris.csv', delimiter=',')
+dataset = np.genfromtxt("datasets/iris.csv", delimiter=",")
 target = dataset[:, -1]
 dataset = np.delete(dataset, -1, axis=1)
 print(f"Task #1:\n{dataset}\n")
@@ -63,12 +63,14 @@ most_common_value = unique_values[np.argmax(value_counts)]
 most_common_count = np.max(value_counts)
 print(f"Task #12. Most common value/count: {most_common_value}/{most_common_count}\n")
 
+
 # Task 13
 def column_function(column):
     mean = np.mean(column)
     column[column < mean] *= 2
     column[column >= mean] /= 4
     return column
+
 
 # Task 14
 merged_dataset[:, 2] = column_function(merged_dataset[:, 2])

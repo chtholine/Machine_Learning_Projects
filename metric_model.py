@@ -105,19 +105,17 @@ print(f"Accuracy for Sex Classification (Best Model): {sex_accuracy}")
 # Visualize the distribution of ages
 plt.figure(figsize=(8, 6))
 sns.histplot(y_age, bins=30, kde=True)
-plt.title('Distribution of Ages')
-plt.xlabel('Age')
-plt.ylabel('Count')
+plt.title("Distribution of Ages")
+plt.xlabel("Age")
+plt.ylabel("Count")
 plt.show()
 
 # Visualize the number of abalones by sex
 data = pd.read_csv(url, names=column_names)
-sex_counts = data['Sex'].value_counts()
+sex_counts = data["Sex"].value_counts()
 plt.bar(sex_counts.index, sex_counts.values)
-plt.xlabel('Sex')
-plt.ylabel('Count')
-plt.title('Abalone Count by Sex')
+plt.xlabel("Sex")
+plt.ylabel("Count")
+plt.title("Abalone Count by Sex")
 plt.xticks(range(len(sex_counts.index)), sex_counts.index)
 plt.show()
-
-
