@@ -5,6 +5,7 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
 # Load the dataset and skip the header row
@@ -24,8 +25,6 @@ scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
 # Splitting the dataset into training, validation, and test sets
-from sklearn.model_selection import train_test_split
-
 X_train, X_temp, y_train, y_temp = train_test_split(
     X_scaled, y, test_size=0.3, random_state=42
 )
