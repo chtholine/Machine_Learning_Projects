@@ -58,6 +58,11 @@ best_mse = mean_squared_error(y_val, best_pred)
 best_r2 = r2_score(y_val, best_pred)
 print("Mean Squared Error (best model):", best_mse)
 print("R-squared (best model):", best_r2)
+best_pred_test = best_model.predict(X_test)
+best_mse_test = mean_squared_error(y_test, best_pred_test)
+best_r2_test = r2_score(y_test, best_pred_test)
+print("Mean Squared Error (best model. test):", best_mse_test)
+print("R-squared (best model. test):", best_r2_test)
 
 # Feature visualization
 fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 8))

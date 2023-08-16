@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.tree import DecisionTreeClassifier
 
-data = pd.read_csv("datasets/auction_data.csv")
+data = pd.read_csv("../datasets/auction_data.csv")
 
 data["total_capacity"] = (
     data["process.b1.capacity"]

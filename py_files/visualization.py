@@ -2,9 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-player_data = pd.read_csv("datasets/player_data.csv")
-players = pd.read_csv("datasets/Players.csv")
-season_stats = pd.read_csv("datasets/Seasons_Stats.csv")
+player_data = pd.read_csv("../datasets/player_data.csv")
+players = pd.read_csv("../datasets/Players.csv")
+season_stats = pd.read_csv("../datasets/Seasons_Stats.csv")
 
 # new player_data feature
 player_data["weight_kg"] = (

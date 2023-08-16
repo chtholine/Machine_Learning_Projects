@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
 # Load the dataset and skip the header row
-data = pd.read_csv("datasets/SouthGermanCredit.asc", sep=" ")
+data = pd.read_csv("../datasets/SouthGermanCredit.asc", sep=" ")
 print(data.head())
 print(data.info())
 
