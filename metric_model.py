@@ -94,13 +94,17 @@ X, y_age, y_sex = preprocess_data(url, column_names)
 age_param_grid = {"n_neighbors": [3, 5, 7, 9]}
 age_model = train_model(X_train, y_age_train, age_param_grid)
 age_accuracy = evaluate_model(age_model, X_val, y_age_val)
+age_accuracy_test = evaluate_model(age_model, X_test, y_age_test)
 print(f"Accuracy for Age Classification (Best Model): {age_accuracy}")
+print(f"Accuracy for Age Classification (Best Model. Test): {age_accuracy_test}")
 
 # Train and evaluate sex classification model
 sex_param_grid = {"n_neighbors": [3, 5, 7, 9]}
 sex_model = train_model(X_train, y_sex_train, sex_param_grid)
 sex_accuracy = evaluate_model(sex_model, X_val, y_sex_val)
+sex_accuracy_test = evaluate_model(sex_model, X_test, y_sex_test)
 print(f"Accuracy for Sex Classification (Best Model): {sex_accuracy}")
+print(f"Accuracy for Sex Classification (Best Model. Test): {sex_accuracy_test}")
 
 # Visualize the distribution of ages
 plt.figure(figsize=(8, 6))
